@@ -1,0 +1,9 @@
+[
+    {
+        "key": "alt+n",  // My compile shortcut
+        "command": "workbench.action.terminal.sendSequence",
+        "args": {
+        "text": "${workspaceFolder}\\Script\\build_all.bat\u000D"
+        }
+    }
+]
