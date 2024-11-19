@@ -155,3 +155,109 @@ void PlatformWriteConsole(char *String)
     #error
 #endif
 }
+
+void *PlatformAllocateMemory(uptr Size)
+{
+    void *Result = 0;
+
+    if(!Size)
+    {
+        Log("Size is 0\n");
+        return Result;
+    }
+
+#ifdef WINDOWS_OS
+    Result = VirtualAlloc(0, Size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if(!Result)
+    {
+        Log("VirtualAlloc() failed: 0x%X\n", GetLastError());
+        return Result;
+    }
+#else
+    #error
+#endif
+
+    return Result;
+}
+
+bool PlatformFreeMemory(void *Memory)
+{
+    bool Result = 0;
+
+    if(!Memory)
+    {
+        Log("Memory is 0\n");
+        return Result;
+    }
+
+#ifdef WINDOWS_OS
+    if(!VirtualFree(Memory, 0, MEM_RELEASE))
+    {
+        Log("VirtualFree() failed: 0x%X\n", GetLastError());
+        return Result;
+    }
+#else
+    #error
+#endif
+
+    return Result;
+}
+
+bool PlatformReadFile(file *File, char *FileName)
+{
+    bool Result = 0;
+
+#ifdef WINDOWS_OS
+    HANDLE FileHandle = CreateFileA(FileName, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    if(FileHandle == INVALID_HANDLE_VALUE)
+    {
+        Log("CreateFileA() failed: 0x%X\n", GetLastError());
+        return Result;
+    }
+
+    LARGE_INTEGER FileSize = {0};
+    if(!GetFileSizeEx(FileHandle, &FileSize))
+    {
+        Log("GetFileSizeEx() failed: 0x%X\n", GetLastError());
+        CloseHandle(FileHandle);
+        return Result;
+    }
+
+    File->Memory = PlatformAllocateMemory(FileSize.QuadPart);
+    if(!File->Memory)
+    {
+        CloseHandle(FileHandle);
+        return Result;
+    }
+
+    DWORD BytesRead = 0;
+    if(!ReadFile(FileHandle, File->Memory, (DWORD)FileSize.QuadPart, &BytesRead, 0))
+    {
+        DWORD Error = GetLastError();
+        if(Error != ERROR_IO_PENDING)
+        {
+            Log("ReadFile() failed: 0x%X\n", GetLastError());
+            VirtualFree(File->Memory, 0, MEM_RELEASE);
+            File->Memory = 0;
+            CloseHandle(FileHandle);
+            return Result;
+        }
+    }
+    else if(BytesRead != FileSize.QuadPart)
+    {
+        Log("File read and expected read mismatch\n");
+        VirtualFree(File->Memory, 0, MEM_RELEASE);
+        File->Memory = 0;
+        CloseHandle(FileHandle);
+        return Result;
+    }
+
+    File->Size = FileSize.QuadPart;
+    CloseHandle(FileHandle);
+#else
+    #error
+#endif
+
+    Result = 1;
+    return Result;
+}

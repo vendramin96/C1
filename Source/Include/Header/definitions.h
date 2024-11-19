@@ -7,6 +7,7 @@
 
 #define WINDOWS_OS
 #define POINTER_SIZE sizeof(void *)
+#define MAX_U32 0xFFFFFFFF
 
 #define Assert(expression) do { if(!(expression)) { *(int *)0 = 0; } } while(0)
 #define ArrayCount(array) (sizeof(array) / sizeof((array)[0]))
