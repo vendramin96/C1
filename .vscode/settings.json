@@ -1,6 +1,12 @@
 {
     "C_Cpp.errorSquiggles": "disabled",
     "files.associations": {
-        "main.h": "c"
+        "main.h": "c",
+        "platform.h": "c",
+        "definitions.h": "c",
+        "iterator": "c",
+        "initializer_list": "c",
+        "utility": "c",
+        "xutility": "c"
     }
 }

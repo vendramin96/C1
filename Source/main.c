@@ -29,5 +29,13 @@ DrawPixel(platform_video *Video, int X, int Y, u32 Color)
 
 UPDATE_AND_RENDER(UpdateAndRender)
 {
-    DrawPixel(Video, 10, 10, 0x00FF);
+    engine_state *EngineState = (engine_state *)Memory->PermanentMemory;
+    if(!EngineState->IsInitialized)
+    {
+        file PNGFile = {0};
+        PlatformReadFile(&PNGFile, "a.png");
+        ParsePNG(&PNGFile);
+
+        EngineState->IsInitialized = 1;
+    }
 }
