@@ -1,32 +1,27 @@
 #include "windows_main.h"
 
-internal_function void
-DrawPixel(platform_video *Video, int X, int Y, u32 Color)
+internal_function bool
+LoadEngineDLL(windows_engine_dll *EngineDLL)
 {
-    if(X < 0)
+    bool Result = 0;
+
+    EngineDLL->Library = LoadLibraryA(ENGINE_DLL_FILE_NAME);
+    if(!EngineDLL->Library)
     {
-        X = 0;
-    }
-    else if(X >= Video->Width)
-    {
-        X = Video->Width - 1;
+        Log("LoadLibraryA() failed: 0x%X\n", GetLastError());
+        return Result;
     }
 
-    if(Y < 0)
+    EngineDLL->UpdateAndRender = (update_and_render *)GetProcAddress(EngineDLL->Library, "UpdateAndRender");
+    if(!EngineDLL->UpdateAndRender)
     {
-        Y = 0;
-    }
-    else if(Y >= Video->Height)
-    {
-        Y = Video->Height - 1;
+        Log("GetProcAddress() failed: 0x%X\n", GetLastError());
+        return Result;
     }
 
-    u8 *Row = (u8 *)Video->Memory + (X * Video->BytesPerPixel) + (Y * Video->Pitch);
-    u32 *Pixel = (u32 *)Row;
-    *Pixel = Color;
+    Result = 1;
+    return Result;
 }
-
-/////////////////////////////////////////////////////////////////////////
 
 internal_function bool
 WindowsGetWindowDimension(HWND Window, window_dimension *WindowDimension)
@@ -106,11 +101,26 @@ WinMain(HINSTANCE Instance, HINSTANCE PreviousInstance, PSTR CommandLine, int Sh
     int Result = -1;
 
     SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
-    
+    windows_engine_dll WindowsEngineDLL = {0};
+    if(!LoadEngineDLL(&WindowsEngineDLL))
+    {
+        Log("Failed to load engine dll\n");
+        return Result;
+    }
+
     windows_video WindowsVideo = {0};
     if(!InitializeVideo(&WindowsVideo, WINDOW_WIDTH, WINDOW_HEIGHT, 4))
     {
         Log("Failed to initialize video\n");
+        return Result;
+    }
+
+    platform_memory WindowsMemory = {0};
+    WindowsMemory.PermanentMemorySize = Megabytes(256);
+    WindowsMemory.PermanentMemory = PlatformAllocateMemory(WindowsMemory.PermanentMemorySize);
+    if(!WindowsMemory.PermanentMemory)
+    {
+        Log("Failed to allocate memory for platform_memory WindowsMemory\n");
         return Result;
     }
 
@@ -190,7 +200,12 @@ WinMain(HINSTANCE Instance, HINSTANCE PreviousInstance, PSTR CommandLine, int Sh
             break;
         }
 
-        DrawPixel(&WindowsVideo.State, 10, 10, 0xFFFFFFFF);
+        if(WindowsEngineDLL.UpdateAndRender)
+        {
+            platform_memory EngineMemory = WindowsMemory;
+            platform_video EngineVideo = WindowsVideo.State;            
+            WindowsEngineDLL.UpdateAndRender(&EngineMemory, &EngineVideo);
+        }
 
         window_dimension WindowDimension = {0};
         if(WindowsGetWindowDimension(Window, &WindowDimension))

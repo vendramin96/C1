@@ -11,6 +11,14 @@
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
 
+#define ENGINE_DLL_FILE_NAME "main.dll"
+
+typedef struct
+{
+    HMODULE Library;
+    update_and_render *UpdateAndRender;
+} windows_engine_dll;
+
 typedef struct
 {
     int X;

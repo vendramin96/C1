@@ -3,7 +3,6 @@
 
 #include "Header/definitions.h"
 #include "Library/platform.h"
-
-#include "huffman_encoding.c"
+#include "platform.h"
 
 #endif
