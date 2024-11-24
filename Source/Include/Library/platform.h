@@ -7,6 +7,8 @@ typedef struct
 {
     void *Memory;
     uptr Size;
+    uptr BitBuffer;
+    int BitBufferCount;
 } file;
 
 uptr PlatformFormatString(char *Buffer, uptr BufferSize, char *Format, ...);

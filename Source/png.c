@@ -31,7 +31,7 @@ ParsePNG(file *PNGFile)
             }
             else if(ChunkHeader->Type == 'IDAT')
             {
-                ParseZLib(ChunkData, ChunkHeader->Length);
+                ZLibParse(ChunkData, ChunkHeader->Length);
             }
             else if(ChunkHeader->Type == 'IEND')
             {

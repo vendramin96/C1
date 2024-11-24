@@ -35,30 +35,51 @@ ConsumeSize(void **Memory, uptr *MemorySize, uptr Size)
     return Result;
 }
 
+internal_function void
+FlushFileBitBuffer(file *File)
+{
+    File->BitBuffer = 0;
+    File->BitBufferCount;
+}
+
 internal_function uptr
-ConsumeBitsSize(void **Memory, uptr *MemorySize, int Size)
+ConsumeFileBitsSize(file *File, int Size)
 {
     uptr Result = 0;
 
-    int BitCount = 0;
-    while(Size > 0)
+    int BitsLeft = Size;
+    int BitBufferCount = File->BitBufferCount;
+    while(BitsLeft)
     {
-        u8 Byte = *(u8 *)*Memory;
-        Result |= Byte << BitCount;
-
-        if(Size > 8)
+        if(File->BitBufferCount >= 64)
         {
-            BitCount += 8;
-            *Memory = (u8 *)*Memory + 1;
+            FlushFileBitBuffer(File);
+        }
+
+        u8 Byte = *(u8 *)File->Memory;
+        int BitsConsumed = 0;
+        if(BitsLeft >= 8)
+        {
+            BitsConsumed = 8;
+            File->BitBuffer |= Byte << File->BitBufferCount;
+            File->BitBufferCount += BitsConsumed;
+            File->Memory = (u8 *)File->Memory + 1;
+            File->Size -= 1;            
         }
         else
-        {
-            BitCount = Size;
+        {   
+            BitsConsumed = BitsLeft;         
+            File->BitBuffer |= ((Byte >> (File->BitBufferCount % 8)) & ((1 << BitsConsumed) - 1)) << File->BitBufferCount;
+            File->BitBufferCount += BitsConsumed;
         }
 
-        Size -= BitCount;
+        BitsLeft -= BitsConsumed;
     }
 
+    Assert(File->Size >= 0);
+    Assert(!BitsLeft);
+
+    Result = (File->BitBuffer >> (BitBufferCount)) & ((1 << Size) - 1);
     return Result;
 }
 
