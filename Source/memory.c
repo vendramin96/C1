@@ -43,7 +43,7 @@ FlushFileBitBuffer(file *File)
 }
 
 internal_function uptr
-ConsumeFileBitsSize(file *File, int Size)
+ConsumeFileBits(file *File, int Size)
 {
     uptr Result = 0;
 
@@ -58,7 +58,7 @@ ConsumeFileBitsSize(file *File, int Size)
 
         u8 Byte = *(u8 *)File->Memory;
         int BitsConsumed = 0;
-        if(BitsLeft >= 8)
+        if(((File->BitBufferCount % 8) + BitsLeft) >= 8)
         {
             BitsConsumed = 8;
             File->BitBuffer |= Byte << File->BitBufferCount;
