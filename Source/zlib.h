@@ -8,15 +8,15 @@
 
 typedef struct
 {
-    int Symbol;
-    int Frequency;
+    int Symbol; //Code
+    int Frequency; //Length
     struct huffman_tree *Left;
     struct huffman_tree *Right;
 } huffman_tree;
 
 typedef struct
 {
-    huffman_tree *Array;
+    huffman_tree **Heap;
     int Size;
     int Capacity;
 } priority_queue;
