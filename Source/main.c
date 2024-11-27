@@ -49,7 +49,7 @@ UPDATE_AND_RENDER(UpdateAndRender)
         Print("\n");
         #endif
 
-        int Array[] = {97, 98, 98, 99, 99, 99, 100, 100, 100, 100, 101, 101, 101, 101, 101, 101, 102, 102, 102, 102, 102, 102, 102};
+        int Array[] = { 66, 67, 67, 67, 67, 67, 67, 65, 65, 65, 65, 65, 68, 68, 68 };
         char S[100] = {0};
         huffman_tree *Root = BuildHuffmanTree(Array, ArrayCount(Array));
         PrintHuffmanTree(Root, S, 0);

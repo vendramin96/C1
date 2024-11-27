@@ -11,7 +11,7 @@ PrintHuffmanTree(huffman_tree *Node, char *String, int Index)
     if(!Node->Left && !Node->Right)
     {
         String[Index] = '\0';
-        Print("Symbol: %c : %s\n", Node->Symbol, String);
+        Print("Symbol: %d : %s\n", Node->Symbol, String);
     }
 
     if(Node->Left != 0)
@@ -52,7 +52,7 @@ HuffmanPriorityQueueHeapifyUp(huffman_priority_queue *Queue, int Index)
 {
     int ParentIndex = (Index - 1) / 2;
 
-    while(Queue->Heap[ParentIndex]->Frequency > Queue->Heap[Index]->Frequency)
+    while((Index > 0) && (Queue->Heap[ParentIndex]->Frequency > Queue->Heap[Index]->Frequency))
     {
         huffman_tree *Temporary = Queue->Heap[ParentIndex];
         Queue->Heap[ParentIndex] = Queue->Heap[Index];
@@ -68,12 +68,12 @@ HuffmanPriorityQueueHeapifyDown(huffman_priority_queue *Queue, int Index)
     int RightIndex = (2 * Index) + 2;
     int Smallest = Index;
 
-    if((LeftIndex < Queue->Size) && (Queue->Heap[LeftIndex]->Frequency < Queue->Heap[Index]->Frequency))
+    if((LeftIndex < Queue->Size) && (Queue->Heap[LeftIndex]->Frequency < Queue->Heap[Smallest]->Frequency))
     {
         Smallest = LeftIndex;
     }
 
-    if((RightIndex < Queue->Size) && (Queue->Heap[RightIndex]->Frequency < Queue->Heap[Index]->Frequency))
+    if((RightIndex < Queue->Size) && (Queue->Heap[RightIndex]->Frequency < Queue->Heap[Smallest]->Frequency))
     {
         Smallest = RightIndex;
     }
@@ -109,6 +109,11 @@ HuffmanPriorityQueueExtractMin(huffman_priority_queue *Queue)
 internal_function void
 HuffmanPriorityQueueInsert(huffman_priority_queue *Queue, huffman_tree *Node)
 {
+    if(Queue->Size >= Queue->Capacity)
+    {
+        return;
+    }
+
     Queue->Heap[Queue->Size++] = Node;
     HuffmanPriorityQueueHeapifyUp(Queue, Queue->Size - 1);
 }
@@ -118,6 +123,7 @@ HuffmanPriorityQueueAllocate(huffman_priority_queue *Queue, int Capacity)
 {
     bool Result = 0;
 
+    
     Queue->Heap = PlatformAllocateMemory(sizeof(void *) * Capacity);
     if(!Queue->Heap)
     {
@@ -125,6 +131,8 @@ HuffmanPriorityQueueAllocate(huffman_priority_queue *Queue, int Capacity)
         return Result;
     }
 
+    Queue->Capacity = Capacity;
+    
     Result = 1;
     return Result;
 }
@@ -148,7 +156,7 @@ BuildHuffmanTree(int *Array, int Count)
     }
     
     huffman_priority_queue Queue = {0};
-    if(!HuffmanPriorityQueueAllocate(&Queue, Megabytes(32)))
+    if(!HuffmanPriorityQueueAllocate(&Queue, 4096))
     {
         Log("Failed to initialize priority queue\n");
         return Result;
