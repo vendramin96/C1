@@ -47,9 +47,8 @@ ConsumeFileBits(file *File, int Size)
 {
     uptr Result = 0;
 
-    int BitsLeft = Size;
-    int BitBufferCount = File->BitBufferCount;
-    while(BitsLeft)
+    Result = File->BitBufferCount;
+    while(Size > 0)
     {
         if(File->BitBufferCount >= 64)
         {
@@ -57,29 +56,31 @@ ConsumeFileBits(file *File, int Size)
         }
 
         u8 Byte = *(u8 *)File->Memory;
-        int BitsConsumed = 0;
-        if(((File->BitBufferCount % 8) + BitsLeft) >= 8)
+        int BitsConsumed = (Size < 8) ? (Size) : (8);
+
+        if(BitsConsumed >= 8)
         {
-            BitsConsumed = 8;
-            File->BitBuffer |= Byte << File->BitBufferCount;
-            File->BitBufferCount += BitsConsumed;
-            File->Memory = (u8 *)File->Memory + 1;
-            File->Size -= 1;            
+            File->BitBuffer |= Byte << File->BitBufferCount;                        
         }
         else
-        {   
-            BitsConsumed = BitsLeft;         
-            File->BitBuffer |= ((Byte >> (File->BitBufferCount % 8)) & ((1 << BitsConsumed) - 1)) << File->BitBufferCount;
-            File->BitBufferCount += BitsConsumed;
+        {
+            int ByteMask = ((1 << BitsConsumed) - 1);
+            Byte = (Byte >> (File->BitBufferCount % 8)) & ByteMask;
+            File->BitBuffer |= Byte << File->BitBufferCount;
         }
 
-        BitsLeft -= BitsConsumed;
+        if((File->BitBufferCount % 8) + BitsConsumed >= 8)
+        {
+            File->Memory = (u8 *)File->Memory + 1;
+            File->Size--;
+        }
+
+        File->BitBufferCount += BitsConsumed;
+        Size -= BitsConsumed;
     }
 
-    Assert(File->Size >= 0);
-    Assert(!BitsLeft);
-
-    Result = (File->BitBuffer >> (BitBufferCount)) & ((1 << Size) - 1);
+    Result = (File->BitBuffer >> Result);
+    
     return Result;
 }
 

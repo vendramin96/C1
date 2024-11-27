@@ -31,7 +31,7 @@ ParsePNG(file *PNGFile)
             }
             else if(ChunkHeader->Type == 'IDAT')
             {
-                ZLibParse(ChunkData, ChunkHeader->Length);
+                DeflateDecompress(ChunkData, ChunkHeader->Length);
             }
             else if(ChunkHeader->Type == 'IEND')
             {

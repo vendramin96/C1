@@ -12,7 +12,8 @@ typedef struct
 } engine_state;
 
 #include "memory.c"
-#include "zlib.c"
+#include "dsa.c"
+#include "deflate.c"
 #include "png.c"
 
 #endif
