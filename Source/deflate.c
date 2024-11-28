@@ -1,5 +1,11 @@
 #include "deflate.h"
 
+internal_function huffman_tree *
+DeflateBuildHuffmanTree(int *Array, int Count)
+{
+    return 0;
+}
+
 internal_function bool
 DeflateDecompress(void *Data, uptr Size)
 {
@@ -8,7 +14,7 @@ DeflateDecompress(void *Data, uptr Size)
     file At = {0};
     At.Memory = Data;
     At.Size = Size;
-
+#if 0
     zlib_header *ZLibHeader  = ConsumeFile(&At, zlib_header);
 
     u8 CM = ZLibHeader->CMF & 0xF;
@@ -39,17 +45,27 @@ DeflateDecompress(void *Data, uptr Size)
     {
         ConsumeFile(&At, u32);
     }
-
+#endif
     uptr BFINAL = 0;
 
     while(!BFINAL)
     {
-        BFINAL = ConsumeFileBits(&At, 1);
-        uptr BTYPE = ConsumeFileBits(&At, 2);
+        BFINAL = ConsumeFileBitsMSBReversed(&At, 1);
+        uptr BTYPE = ConsumeFileBitsMSBReversed(&At, 2);
 
         if(!BTYPE)
         {
-            Assert(0);
+            ConsumeFileBitsMSBReversed(&At, 5);
+            u16 Length = (u16)ConsumeFileBitsMSBReversed(&At, 16);
+            u16 NotLength = (u16)ConsumeFileBitsMSBReversed(&At, 16);
+
+            if(Length != (u16)~NotLength)
+            {
+                Log("Length and one's complement of Length mismatch\n");
+                return Result;
+            }
+
+            ConsumeFileSize(&At, Length); //@TODO: Copy to output buffer
         }
         else if(BTYPE == 1)
         {
@@ -57,18 +73,7 @@ DeflateDecompress(void *Data, uptr Size)
         }
         else if(BTYPE == 2)
         {
-            uptr HLIT = ConsumeFileBits(&At, 5) + 257;
-            uptr HDIST = ConsumeFileBits(&At, 5) + 1;
-            uptr HCLEN = ConsumeFileBits(&At, 4) + 4;
-
-            int CLCL[] = { 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 };
-            int CL[ArrayCount(CLCL)] = {0};
-            for(int Index = 0; Index < HCLEN; Index++)
-            {
-                CL[CLCL[Index]] = (int)ConsumeFileBits(&At, 3);
-            }
-
-            int Index = 0;
+            Assert(0);
         }
         else
         {

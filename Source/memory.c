@@ -43,7 +43,7 @@ FlushFileBitBuffer(file *File)
 }
 
 internal_function uptr
-ConsumeFileBits(file *File, int Size)
+ConsumeFileBitsLSB(file *File, int Size)
 {
     uptr Result = 0;
 
@@ -81,6 +81,104 @@ ConsumeFileBits(file *File, int Size)
 
     Result = (File->BitBuffer >> Result);
     
+    return Result;
+}
+
+internal_function uptr
+ConsumeFileBitsLSBReversed(file *File, int Size)
+{
+    uptr Result = 0;
+
+    Result = ConsumeFileBitsLSB(File, Size);
+
+    for(int Index = 0; Index < (Size / 2); Index++)
+    {
+        int Left = Size - (Index + 1);
+        int LeftValue = (Result >> Left) & 1;
+        int RightValue = (Result >> Index) & 1;
+        
+        if(LeftValue != RightValue)
+        {
+            Result ^= (uptr)(1 << Left);
+            Result ^= (uptr)(1 << Index);
+        }
+    }
+
+    return Result;
+}
+
+internal_function uptr
+ConsumeFileBitsMSB(file *File, int Size)
+{
+    uptr Result = 0;
+
+    if(Size <= 0)
+    {
+        Assert(0);
+        return Result;
+    }
+
+    Result = File->BitBufferCount;
+    while(Size > 0)
+    {
+        if(File->BitBufferCount >= 64)
+        {
+            FlushFileBitBuffer(File);
+        }
+        
+        int BitsConsumed = (Size < 8) ? (Size) : (8);
+        int BitsLeft = 8 - (File->BitBufferCount % 8);
+        BitsConsumed = (BitsConsumed > BitsLeft) ? (BitsLeft): (BitsConsumed);        
+        int BitsUsed = BitsConsumed + (File->BitBufferCount % 8);
+        
+        u8 Byte = *(u8 *)File->Memory;
+        if(BitsConsumed >= 8)
+        {
+            File->BitBuffer |= Byte << File->BitBufferCount;
+            File->BitBufferCount += BitsConsumed;            
+        }
+        else
+        {
+            int ByteMask = (1 << BitsConsumed) - 1;
+            Byte = ((Byte << (File->BitBufferCount % 8)) >> (8 - BitsConsumed)) & ByteMask;
+            File->BitBuffer |= Byte << File->BitBufferCount;
+            File->BitBufferCount += BitsConsumed;
+        }
+
+        if(BitsUsed >= 8)
+        {
+            File->Memory = (u8 *)File->Memory + 1;
+            File->Size--;
+        }
+
+        Size -= BitsConsumed;
+    }
+
+    Result = (File->BitBuffer >> Result);
+    
+    return Result;
+}
+
+internal_function uptr
+ConsumeFileBitsMSBReversed(file *File, int Size)
+{
+    uptr Result = 0;
+
+    Result = ConsumeFileBitsMSB(File, Size);
+
+    for(int Index = 0; Index < (Size / 2); Index++)
+    {
+        int Left = Size - (Index + 1);
+        int LeftValue = (Result >> Left) & 1;
+        int RightValue = (Result >> Index) & 1;
+        
+        if(LeftValue != RightValue)
+        {
+            Result ^= (uptr)(1 << Left);
+            Result ^= (uptr)(1 << Index);
+        }
+    }
+
     return Result;
 }
 

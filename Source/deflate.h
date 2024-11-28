@@ -4,6 +4,9 @@
 #include "Header/definitions.h"
 #include "Library/platform.h"
 
+#define DEFLATE_CLCL_COUNT 19
+#define DEFLATE_MAX_BITS 15
+
 #pragma pack(push, 1)
 typedef struct
 {

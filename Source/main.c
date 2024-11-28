@@ -32,27 +32,16 @@ UPDATE_AND_RENDER(UpdateAndRender)
     engine_state *EngineState = (engine_state *)Memory->PermanentMemory;
     if(!EngineState->IsInitialized)
     {
-        #if 0
         file PNGFile = {0};
         PlatformReadFile(&PNGFile, "a.png");
-        ParsePNG(&PNGFile);
+        //ParsePNG(&PNGFile);
 
-        u16 Value = 0x1234;
-        file At = {0};
-        At.Memory = &Value;
-        At.Size = sizeof(u16);
-        while(At.Size > 0)
+        u8 Data[] = 
         {
-            Print("%d ", ConsumeFileBits(&At, 1));
-        }
-
-        Print("\n");
-        #endif
-
-        int Array[] = { 66, 67, 67, 67, 67, 67, 67, 65, 65, 65, 65, 65, 68, 68, 68 };
-        char S[100] = {0};
-        huffman_tree *Root = BuildHuffmanTree(Array, ArrayCount(Array));
-        PrintHuffmanTree(Root, S, 0);
+            0xcb, 0x48,	0xcd,	0xc9,	0xc9,	0x57,	0xc8,	0x40,	0x27,	0xb9,	0x00,
+        };
+        
+        DeflateDecompress(Data, sizeof(Data));
 
         EngineState->IsInitialized = 1;
     }
