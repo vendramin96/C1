@@ -43,53 +43,9 @@ FlushFileBitBuffer(file *File)
 }
 
 internal_function uptr
-ConsumeFileBitsLSB(file *File, int Size)
+ReverseBits(uptr Value, int Size)
 {
-    uptr Result = 0;
-
-    Result = File->BitBufferCount;
-    while(Size > 0)
-    {
-        if(File->BitBufferCount >= 64)
-        {
-            FlushFileBitBuffer(File);
-        }
-
-        u8 Byte = *(u8 *)File->Memory;
-        int BitsConsumed = (Size < 8) ? (Size) : (8);
-
-        if(BitsConsumed >= 8)
-        {
-            File->BitBuffer |= Byte << File->BitBufferCount;                        
-        }
-        else
-        {
-            int ByteMask = ((1 << BitsConsumed) - 1);
-            Byte = (Byte >> (File->BitBufferCount % 8)) & ByteMask;
-            File->BitBuffer |= Byte << File->BitBufferCount;
-        }
-
-        if((File->BitBufferCount % 8) + BitsConsumed >= 8)
-        {
-            File->Memory = (u8 *)File->Memory + 1;
-            File->Size--;
-        }
-
-        File->BitBufferCount += BitsConsumed;
-        Size -= BitsConsumed;
-    }
-
-    Result = (File->BitBuffer >> Result);
-    
-    return Result;
-}
-
-internal_function uptr
-ConsumeFileBitsLSBReversed(file *File, int Size)
-{
-    uptr Result = 0;
-
-    Result = ConsumeFileBitsLSB(File, Size);
+    uptr Result = Value;
 
     for(int Index = 0; Index < (Size / 2); Index++)
     {
@@ -112,73 +68,44 @@ ConsumeFileBitsMSB(file *File, int Size)
 {
     uptr Result = 0;
 
-    if(Size <= 0)
+    if(Size < 1)
     {
-        Assert(0);
         return Result;
     }
 
-    Result = File->BitBufferCount;
+    // 7654 3210
+    // 1010 0101 ... 1010 0101
+    // 101.0 0.101 ... 1010 0101 
+    Result = Size;
     while(Size > 0)
-    {
-        if(File->BitBufferCount >= 64)
+    {        
+        if(File->BitBufferCount == (sizeof(uptr) * 8))
         {
             FlushFileBitBuffer(File);
         }
-        
-        int BitsConsumed = (Size < 8) ? (Size) : (8);
-        int BitsLeft = 8 - (File->BitBufferCount % 8);
-        BitsConsumed = (BitsConsumed > BitsLeft) ? (BitsLeft): (BitsConsumed);        
-        int BitsUsed = BitsConsumed + (File->BitBufferCount % 8);
-        
-        u8 Byte = *(u8 *)File->Memory;
-        if(BitsConsumed >= 8)
-        {
-            File->BitBuffer |= Byte << File->BitBufferCount;
-            File->BitBufferCount += BitsConsumed;            
-        }
-        else
-        {
-            int ByteMask = (1 << BitsConsumed) - 1;
-            Byte = ((Byte << (File->BitBufferCount % 8)) >> (8 - BitsConsumed)) & ByteMask;
-            File->BitBuffer |= Byte << File->BitBufferCount;
-            File->BitBufferCount += BitsConsumed;
-        }
 
-        if(BitsUsed >= 8)
+        int BitsLeft = 8 - (File->BitBufferCount % 8);
+        int BitCount = (Size < 8) ? (Size) : (8);
+        u8 Byte = *(u8 *)File->Memory;
+     
+        //BitCount = (BitCount > BitsLeft) ? (BitsLeft) : (BitCount);
+        BitsLeft = (BitsLeft > BitCount) ? (BitsLeft - BitCount) : (BitCount - BitsLeft);
+        Byte = (Byte >> BitsLeft) & ((1 << BitCount) - 1);
+        File->BitBuffer |= (uptr)Byte << (64 - (File->BitBufferCount + BitCount));
+        File->BitBufferCount += BitCount;
+
+        if(!BitsLeft)
         {
             File->Memory = (u8 *)File->Memory + 1;
             File->Size--;
         }
-
-        Size -= BitsConsumed;
-    }
-
-    Result = (File->BitBuffer >> Result);
-    
-    return Result;
-}
-
-internal_function uptr
-ConsumeFileBitsMSBReversed(file *File, int Size)
-{
-    uptr Result = 0;
-
-    Result = ConsumeFileBitsMSB(File, Size);
-
-    for(int Index = 0; Index < (Size / 2); Index++)
-    {
-        int Left = Size - (Index + 1);
-        int LeftValue = (Result >> Left) & 1;
-        int RightValue = (Result >> Index) & 1;
         
-        if(LeftValue != RightValue)
-        {
-            Result ^= (uptr)(1 << Left);
-            Result ^= (uptr)(1 << Index);
-        }
+        Size -= BitCount;
     }
 
+    Assert(!Size);
+
+    Result = (File->BitBuffer >> (64 - File->BitBufferCount)) & ((1 << Result) - 1);
     return Result;
 }
 
