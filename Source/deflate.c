@@ -45,7 +45,7 @@ DeflateDecompress(void *Data, uptr Size)
     {
         ConsumeFile(&At, u32);
     }
-
+#endif
     uptr BFINAL = 0;
 
     while(!BFINAL)
@@ -69,8 +69,29 @@ DeflateDecompress(void *Data, uptr Size)
         }
         else if(BTYPE == 1)
         {
-            u8 Byte = (u8)ConsumeFileBitsMSBReversed(&At, 8);
-            int i = 0;
+            int LoopCount = 0;
+            for(;;)
+            {
+                uptr Code = ConsumeFileBitsMSBReversed(&At, 8);
+                if(Code < 256)
+                {
+                    int i = 0;
+                }
+                else if((Code >= 257) && (Code <= 285))
+                {
+                    int i = 0;
+                }
+                else if(Code == 256)
+                {
+                    break;
+                }
+                else
+                {
+                    return Result;
+                }
+
+                int i = 0;
+            }
         }
         else if(BTYPE == 2)
         {
@@ -86,5 +107,5 @@ DeflateDecompress(void *Data, uptr Size)
 
     Result = 1;
     return Result;
-#endif
+
 }

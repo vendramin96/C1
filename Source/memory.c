@@ -39,7 +39,8 @@ internal_function void
 FlushFileBitBuffer(file *File)
 {
     File->BitBuffer = 0;
-    File->BitBufferCount;
+    File->BitBufferCount = 0;
+    File->BitsConsumed = 0;
 }
 
 internal_function uptr
@@ -68,44 +69,56 @@ ConsumeFileBitsMSB(file *File, int Size)
 {
     uptr Result = 0;
 
-    if(Size < 1)
+    if((Size < 1) || (Size > (sizeof(File->BitBuffer) * 8)))
     {
+        Log("Size is %d\n", Size);
+        return Result;
+    }
+    else if(Size > File->Size)
+    {
+        Log("File underflow\n");
         return Result;
     }
 
-    // 7654 3210
-    // 1010 0101 ... 1010 0101
-    // 101.0 0.101 ... 1010 0101 
     Result = Size;
     while(Size > 0)
-    {        
-        if(File->BitBufferCount == (sizeof(uptr) * 8))
+    {
+        if(File->BitBufferCount == (sizeof(File->BitBuffer) * 8))
         {
+            //@TODO;
             FlushFileBitBuffer(File);
         }
 
-        int BitsLeft = 8 - (File->BitBufferCount % 8);
-        int BitCount = (Size < 8) ? (Size) : (8);
+        int BitsConsumed = (Size < 8) ? (Size) : (8);
         u8 Byte = *(u8 *)File->Memory;
-     
-        //BitCount = (BitCount > BitsLeft) ? (BitsLeft) : (BitCount);
-        BitsLeft = (BitsLeft > BitCount) ? (BitsLeft - BitCount) : (BitCount - BitsLeft);
-        Byte = (Byte >> BitsLeft) & ((1 << BitCount) - 1);
-        File->BitBuffer |= (uptr)Byte << (64 - (File->BitBufferCount + BitCount));
-        File->BitBufferCount += BitCount;
-
-        if(!BitsLeft)
+        for(int Index = 7; Index >= 0; Index--)
         {
-            File->Memory = (u8 *)File->Memory + 1;
-            File->Size--;
+            int Bit = GetBit(Byte, Index);
+            File->BitBufferCount++;
+            File->BitBuffer |= (uptr)Bit << (64 - File->BitBufferCount);            
         }
+
+        File->Memory = (u8 *)File->Memory + 1;
+        File->Size--;
         
-        Size -= BitCount;
+        Size -= BitsConsumed;
     }
+    
+    File->BitsConsumed += (int)Result;    
+    Result = File->BitBuffer >> (64 - File->BitsConsumed);
 
-    Assert(!Size);
+    return Result;
+}
 
-    Result = (File->BitBuffer >> (64 - File->BitBufferCount)) & ((1 << Result) - 1);
+internal_function uptr
+ConsumeFileBitsMSBReversed(file *File, int Size)
+{
+    uptr Result = 0;
+    
+    Result = ConsumeFileBitsMSB(File, Size);    
+    Result &= (((uptr)1 << ((Size < 8) ? (Size) : (Size + (((Size - 1) / 8) * 8)))) - 1);
+    Result = ReverseBits(Result, Size);    
+    
     return Result;
 }
 

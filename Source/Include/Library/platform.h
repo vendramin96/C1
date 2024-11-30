@@ -9,6 +9,7 @@ typedef struct
     uptr Size;
     uptr BitBuffer;
     int BitBufferCount;
+    int BitsConsumed;
 } file;
 
 uptr PlatformFormatString(char *Buffer, uptr BufferSize, char *Format, ...);

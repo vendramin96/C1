@@ -41,19 +41,15 @@ UPDATE_AND_RENDER(UpdateAndRender)
             0xcb, 0x48,	0xcd,	0xc9,	0xc9,	0x57,	0xc8,	0x40,	0x27,	0xb9,	0x00,
         };
         
-        //DeflateDecompress(Data, sizeof(Data));
-
+        //DeflateDecompress(Data, sizeof(Data));     
+#if 1
         file At = {0};
         At.Memory = Data;
         At.Size = sizeof(Data);
-
-        uptr R = ConsumeFileBitsMSB(&At, 1);
-        R = ReverseBits(R, 1);
-        R = ConsumeFileBitsMSB(&At, 2);
-        R = ReverseBits(R, 2);
-        R = ConsumeFileBitsMSB(&At, 8);
-        R = ReverseBits(R, 8);
-
+        uptr R = ConsumeFileBitsMSBReversed(&At, 1); //1
+        R = ConsumeFileBitsMSBReversed(&At, 2); //1
+        R = ConsumeFileBitsMSBReversed(&At, 8);//152
+#endif
         EngineState->IsInitialized = 1;
     }
 }
