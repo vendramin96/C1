@@ -41,7 +41,7 @@ UPDATE_AND_RENDER(UpdateAndRender)
             0xcb, 0x48,	0xcd,	0xc9,	0xc9,	0x57,	0xc8,	0x40,	0x27,	0xb9,	0x00,
         };
         
-        //DeflateDecompress(Data, sizeof(Data));     
+        //DeflateDecompress(Data, sizeof(Data));             
 #if 1
         file At = {0};
         At.Memory = Data;
@@ -49,6 +49,7 @@ UPDATE_AND_RENDER(UpdateAndRender)
         uptr R = ConsumeFileBitsMSBReversed(&At, 1); //1
         R = ConsumeFileBitsMSBReversed(&At, 2); //1
         R = ConsumeFileBitsMSBReversed(&At, 8);//152
+        R = ConsumeFileBitsMSBReversed(&At, 8);//149
 #endif
 #if 0
         int Value = 0;
