@@ -5,11 +5,16 @@
 
 typedef struct
 {
+    uptr Buffer;
+    int Count;
+    int Consumed;
+} bit_stream;
+
+typedef struct
+{
     void *Memory;
     uptr Size;
-    uptr BitBuffer;
-    int BitBufferCount;
-    int BitsConsumed;
+    bit_stream BitStream;
 } file;
 
 uptr PlatformFormatString(char *Buffer, uptr BufferSize, char *Format, ...);

@@ -50,6 +50,25 @@ UPDATE_AND_RENDER(UpdateAndRender)
         R = ConsumeFileBitsMSBReversed(&At, 2); //1
         R = ConsumeFileBitsMSBReversed(&At, 8);//152
 #endif
+#if 0
+        int Value = 0;
+        Print("%d\n", SetBit(Value, 0, 1));
+        SetBit(Value, 1, 1);
+        SetBit(Value, 2, 1);
+        SetBit(Value, 3, 1);
+        SetBit(Value, 4, 1);
+        SetBit(Value, 5, 1);
+        SetBit(Value, 6, 1);
+        SetBit(Value, 7, 1);
+        SetBit(Value, 0, 0);
+        SetBit(Value, 1, 0);
+        SetBit(Value, 2, 0);
+        SetBit(Value, 3, 0);
+        SetBit(Value, 4, 0);
+        SetBit(Value, 5, 0);
+        SetBit(Value, 6, 0);
+        SetBit(Value, 7, 0);
+#endif
         EngineState->IsInitialized = 1;
     }
 }
